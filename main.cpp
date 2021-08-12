@@ -537,16 +537,16 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 10://M#
             TYPE = "M#";
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getMon() + "(" + to_string(atoi(current_date.getYear().c_str()) - 1) + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "(" + current_date.getYear() + " Q1).csv";
             break;
         case 11://Q#
             TYPE = "Q#";
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getQ() + "(" + to_string(atoi(current_date.getYear().c_str()) - 1) + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "(" + current_date.getYear() + " Q1).csv";
             break;
         case 12://H#
             TYPE = "H#";
-            temp = current_date.getRangeEnd(5);
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + to_string(atoi(current_date.getYear().c_str()) - 1) + " Q1).csv";
+                temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             break;
         }
     }else{
