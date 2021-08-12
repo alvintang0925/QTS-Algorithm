@@ -203,8 +203,9 @@ void outputFile(Portfolio& portfolio, string file_name) {
     outfile << endl;
 
     for (int j = 0; j < portfolio.day_number; j++) {
+        outfile << "fs( " << j+1 << "),";
         for (int k = 0; k < portfolio.stock_number; k++) {
-            outfile << (portfolio.constituent_stocks[portfolio.stock_id_list[k]].price_list[j + 1] * portfolio.investment_number[k]) + portfolio.remain_fund[k] << ",";
+            outfile << (portfolio.constituent_stocks[portfolio.stock_id_list[k]].price_list[j] * portfolio.investment_number[k]) + portfolio.remain_fund[k] << ",";
         }
         outfile << portfolio.total_money[j] << endl;
     }
@@ -328,9 +329,9 @@ void preSet(string mode, Date& current_date, Date& finish_date, int SLIDETYPE, s
         slide_number = 12;
         break;
     case 10:
-        STARTYEAR = "2010";
+        STARTYEAR = "2009";
         STARTMONTH = "1";
-        ENDYEAR = "2019";
+        ENDYEAR = "2018";
         ENDMONTH = "12";
         TYPE = "M#";
         if(mode == "test"){
@@ -341,9 +342,9 @@ void preSet(string mode, Date& current_date, Date& finish_date, int SLIDETYPE, s
         slide_number = 1;
         break;
     case 11:
-        STARTYEAR = "2010";
+        STARTYEAR = "2009";
         STARTMONTH = "1";
-        ENDYEAR = "2019";
+        ENDYEAR = "2018";
         ENDMONTH = "10";
         TYPE = "Q#";
         if(mode == "test"){
@@ -354,9 +355,9 @@ void preSet(string mode, Date& current_date, Date& finish_date, int SLIDETYPE, s
         slide_number = 3;
         break;
     case 12:
-        STARTYEAR = "2010";
+        STARTYEAR = "2009";
         STARTMONTH = "1";
-        ENDYEAR = "2019";
+        ENDYEAR = "2018";
         ENDMONTH = "7";
         TYPE = "H#";
         if(mode == "test"){
@@ -732,7 +733,7 @@ void capitalLevel(Portfolio* portfolio_list, int portfolio_number) {
         for (int k = 0; k < portfolio_list[j].day_number; k++) {
             portfolio_list[j].total_money[k] = portfolio_list[j].getRemainMoney();
             for (int h = 0; h < portfolio_list[j].stock_number; h++) {
-                portfolio_list[j].total_money[k] += portfolio_list[j].investment_number[h] * portfolio_list[j].constituent_stocks[portfolio_list[j].stock_id_list[h]].price_list[k + 1];
+                portfolio_list[j].total_money[k] += portfolio_list[j].investment_number[h] * portfolio_list[j].constituent_stocks[portfolio_list[j].stock_id_list[h]].price_list[k];
             }
             if(portfolio_list[j].total_money[k] > portfolio_list[j].capital_highest_point){
                 portfolio_list[j].capital_highest_point = portfolio_list[j].total_money[k];
