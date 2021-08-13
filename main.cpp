@@ -31,7 +31,7 @@ using namespace filesystem;
 #define DELTA 0.0004
 #define QTSTYPE 2 //QTS 0, GQTS 1, GNQTS 2
 #define TRENDLINETYPE 0 //linear 0, quadratic 1
-#define MODE "train" //train, test, exhaustive, B&H, specify
+#define MODE "test" //train, test, single
 
 string FILE_DIR = "0813_0.0004_GN_LN";
 string DATA_FILE_DIR = "DJI_30";
@@ -89,6 +89,44 @@ bool readData(string filename, vector<vector<string>> &data_vector, int &size, i
     day_number = temp.size() - 1;
     data_vector = temp;
 
+    return true;
+}
+
+bool readSpeData(string filename, vector<string> &data_vector, int size, string title) {
+    cout << filename << endl;
+    ifstream inFile(filename, ios::in);
+    string line;
+    vector< vector<string> > data;
+
+    if (!inFile) {
+        cout << "Open file failed!" << endl;
+        exit(1);
+    }
+    bool sw = false;
+    vector<string> line_data;
+    while(getline(inFile, line)){
+        istringstream delime(line);
+        string s;
+        
+        while(getline(delime, s, ',')){
+            if(sw){
+                //s.pop_back();
+                if(s != "\r"){
+                    s.erase(remove(s.begin(), s.end(), '\r'), s.end());
+                    line_data.push_back(s);
+                }
+                //sw = false;
+            }
+            if(s == title){
+                sw = true;
+            }
+        }
+        sw = false;
+    }
+    inFile.close();
+    size = line_data.size();
+    data_vector = line_data;
+    
     return true;
 }
 
@@ -226,6 +264,12 @@ void createDir(string file_dir, string type, string mode){
     create_directory(file_dir);
     create_directory(file_dir + "/" + type);
     create_directory(file_dir + "/" + type + "/" + mode);
+    
+}
+
+void createDir(string file_dir, string type, string mode, string company_name){
+    createDir(file_dir, type, mode);
+    create_directory(file_dir + "/" + type + "/" + mode + "/" + company_name);
     
 }
 
@@ -455,6 +499,10 @@ void releaseData(vector<vector<string>> &price_data_vector, vector<vector<vector
 }
 
 string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TYPE) {
+    if(mode != "test"){
+        mode = "train";
+    }
+       
     Date temp;
     if(mode == "train"){
         switch (SLIDETYPE) {
@@ -478,7 +526,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 3://H2M
             TYPE = "H2M";
-            temp = current_date.getRangeEnd(5);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -488,7 +536,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 4://H2Q
             TYPE = "H2Q";
-            temp = current_date.getRangeEnd(5);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -498,12 +546,12 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 5://H2H
             TYPE = "H2H";
-            temp = current_date.getRangeEnd(5);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             break;
         case 6://Y2M
             TYPE = "Y2M";
-            temp = current_date.getRangeEnd(11);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -513,7 +561,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 7://Y2Q
             TYPE = "Y2Q";
-            temp = current_date.getRangeEnd(11);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -523,7 +571,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 8://Y2H
             TYPE = "Y2H";
-            temp = current_date.getRangeEnd(11);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -545,7 +593,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 12://H#
             TYPE = "H#";
-                temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             break;
         }
@@ -557,12 +605,12 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 1://Q2M
             TYPE = "Q2M";
-            temp = current_date.getRangeEnd(2);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
             else {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "-" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
             break;
         case 2://Q2Q
@@ -571,17 +619,52 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 3://H2M
             TYPE = "H2M";
-            temp = current_date.getRangeEnd(5);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
             else {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "-" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
             break;
         case 4://H2Q
             TYPE = "H2Q";
-            temp = current_date.getRangeEnd(5);
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            if (current_date.getYear() != temp.getYear()) {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            else {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            break;
+        case 5://H2H
+            TYPE = "H2H";
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            break;
+        case 6://Y2M
+            TYPE = "Y2M";
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            if (current_date.getYear() != temp.getYear()) {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            else {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            break;
+        case 7://Y2Q
+            TYPE = "Y2Q";
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            if (current_date.getYear() != temp.getYear()) {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            else {
+                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            }
+            break;
+        case 8://Y2H
+            TYPE = "Y2H";
+            temp = current_date.getRangeEnd(current_date.slide_number - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
@@ -589,57 +672,22 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             }
             break;
-        case 5://H2H
-            TYPE = "H2H";
-            temp = current_date.getRangeEnd(5);
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            break;
-        case 6://Y2M
-            TYPE = "Y2M";
-            temp = current_date.getRangeEnd(11);
-            if (current_date.getYear() != temp.getYear()) {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            else {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            break;
-        case 7://Y2Q
-            TYPE = "Y2Q";
-            temp = current_date.getRangeEnd(11);
-            if (current_date.getYear() != temp.getYear()) {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            else {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            break;
-        case 8://Y2H
-            TYPE = "Y2H";
-            temp = current_date.getRangeEnd(11);
-            if (current_date.getYear() != temp.getYear()) {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            else {
-                return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
-            }
-            break;
         case 9://Y2Y
             TYPE = "Y2Y";
-            return "DJI_30/Y2Y/" + mode + "_" + current_date.getYear() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             break;
         case 10://M#
             TYPE = "M#";
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getMon() + "(" + to_string(atoi(current_date.getRangeEnd(-1 * current_date.train_range).getYear().c_str()) - 1) + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             break;
         case 11://Q#
             TYPE = "Q#";
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getQ() + "(" + to_string(atoi(current_date.getRangeEnd(-1 * current_date.train_range).getYear().c_str()) - 1) + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             break;
         case 12://H#
             TYPE = "H#";
             temp = current_date.getRangeEnd(5);
-            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + to_string(atoi(current_date.getYear().c_str()) - 1) + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + to_string(atoi(current_date.getRangeEnd(-1 * current_date.train_range).getYear().c_str()) - 1) + " Q1).csv";
+            return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getRangeEnd(-1 * current_date.train_range).getYear() + " Q1).csv";
             break;
         }
     }
@@ -650,20 +698,25 @@ string getOutputFilePath(Date current_date, string mode, string file_dir, string
     return file_dir + "/" + type + "/" + mode + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + ".csv";
 }
 
+string getOutputFilePath(Date current_date, string mode, string file_dir, string type, string company_name){
+    return file_dir + "/" + type + "/" + mode + "/" + company_name + "/" + company_name + "_" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + ".csv";
+}
+
+
 void initial(double *b, int size) {
     for (int j = 0; j < size; j++) {
         b[j] = 0.5;
     }
 }
 
-void initPortfolio(Portfolio *p, int size, int day_number, Stock *stock_list){
-    for(int j = 0; j < PARTICLENUMBER; j++){
+void initPortfolio(Portfolio *p, int portfolio_number, int size, int day_number, Stock *stock_list){
+    for(int j = 0; j < portfolio_number; j++){
         p[j].init(size, day_number, FUNDS, stock_list);
     }
 }
 
-void initPortfolio(Portfolio *p){
-    for(int j = 0; j < PARTICLENUMBER; j++){
+void initPortfolio(Portfolio *p, int portfolio_number){
+    for(int j = 0; j < portfolio_number; j++){
         p[j].init();
     }
 }
@@ -692,22 +745,41 @@ void genPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_nu
     }
 }
 
-void gen_testPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_number, string **data, string *myTrainData, int myTrainData_size) {
+void genPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_number, int company_id) {
     for (int j = 0; j < portfolio_number; j++) {
+        portfolio_list[j].stock_number = 0;
+        for (int k = 0; k < portfolio_list[j].size; k++) {
+            if(k == company_id){
+                portfolio_list[j].data[k] = 1;
+            }else{
+                portfolio_list[j].data[k] = 0;
+            }
+        }
+        
         for(int k = 0; k < portfolio_list[j].size; k++){
-            for(int h = 0; h < myTrainData_size; h++){
-                if(data[0][k+1] == myTrainData[h]){
-                    portfolio_list[j].data[k] = 1;
-                    portfolio_list[j].stock_id_list[portfolio_list[j].stock_number] = k;
-                    portfolio_list[j].stock_number++;
-                    break;
-                }
+            if(portfolio_list[j].data[k] == 1){
+                portfolio_list[j].stock_id_list[portfolio_list[j].stock_number] = k;
+                portfolio_list[j].stock_number++;
             }
         }
     }
 }
 
-void gen_testPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_number, string **data, Portfolio &temp_portfolio) {
+void genTestPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_number, string *myTrainData, int myTrainData_size) {
+    for (int j = 0; j < portfolio_number; j++) {
+        for(int k = 0; k < portfolio_list[j].size; k++){
+            if(portfolio_list[j].stock_number < myTrainData_size && portfolio_list[j].constituent_stocks[k].company_name == myTrainData[portfolio_list[j].stock_number]){
+                portfolio_list[j].data[k] = 1;
+                portfolio_list[j].stock_id_list[portfolio_list[j].stock_number] = k;
+                portfolio_list[j].stock_number++;
+            }else{
+                portfolio_list[j].data[k] = 0;
+            }
+        }
+    }
+}
+
+void genTestPortfolio(Portfolio* portfolio_list, Stock* stock_list, int portfolio_number, Portfolio &temp_portfolio) {
     for (int j = 0; j < portfolio_number; j++) {
         for(int k = 0; k < portfolio_list[j].size; k++){
             if(k == temp_portfolio.stock_id_list[portfolio_list[j].stock_number] && portfolio_list[j].stock_number < temp_portfolio.stock_number){
@@ -756,7 +828,7 @@ void capitalLevel(Portfolio* portfolio_list, int portfolio_number, Portfolio &re
         for (int k = 0; k < portfolio_list[j].day_number; k++) {
             portfolio_list[j].total_money[k] = portfolio_list[j].getRemainMoney();
             for (int h = 0; h < portfolio_list[j].stock_number; h++) {
-                portfolio_list[j].total_money[k] += portfolio_list[j].investment_number[h] * portfolio_list[j].constituent_stocks[portfolio_list[j].stock_id_list[h]].price_list[k + 1];
+                portfolio_list[j].total_money[k] += portfolio_list[j].investment_number[h] * portfolio_list[j].constituent_stocks[portfolio_list[j].stock_id_list[h]].price_list[k];
             }
             if(portfolio_list[j].total_money[k] > portfolio_list[j].capital_highest_point){
                 portfolio_list[j].capital_highest_point = portfolio_list[j].total_money[k];
@@ -902,7 +974,7 @@ void startTrain(Portfolio &result, Stock *stock_list, int size, int range_day_nu
     Portfolio pBest(size, range_day_number, FUNDS, stock_list);
     Portfolio pWorst(size, range_day_number, FUNDS, stock_list);
     Portfolio* portfolio_list = new Portfolio[PARTICLENUMBER];
-    initPortfolio(portfolio_list, size, range_day_number, stock_list);
+    initPortfolio(portfolio_list, PARTICLENUMBER, size, range_day_number, stock_list);
     
     for(int n = 0; n < EXPNUMBER; n++){
         cout << "___" << n << "___" << endl;
@@ -914,7 +986,7 @@ void startTrain(Portfolio &result, Stock *stock_list, int size, int range_day_nu
         for(int i = 0; i < ITERNUMBER; i++){
             pBest.init();
             pWorst.init();
-            initPortfolio(portfolio_list);
+            initPortfolio(portfolio_list, PARTICLENUMBER);
             genPortfolio(portfolio_list, stock_list, PARTICLENUMBER, beta_, n, i);
             capitalLevel(portfolio_list, PARTICLENUMBER);
             countTrend(portfolio_list, PARTICLENUMBER, FUNDS);
@@ -931,29 +1003,48 @@ void startTrain(Portfolio &result, Stock *stock_list, int size, int range_day_nu
 
 }
 
-void startTest(Portfolio &result, Date current_date, string company_name, string type, int range_day_number){
+
+
+void startTest(Portfolio &result, Stock *stock_list, string *myTrainData, int myTrainData_size, int size, int range_day_number){
     
+    Portfolio* portfolio_list = new Portfolio[1];
+    initPortfolio(portfolio_list, 1, size, range_day_number, stock_list);
+    genTestPortfolio(portfolio_list, stock_list, 1, myTrainData, myTrainData_size);
+    capitalLevel(portfolio_list, 1);
+    countTrend(portfolio_list, 1, FUNDS);
+    result.copyP(portfolio_list[0]);
+    delete[] portfolio_list;
+}
+
+void startSin(Portfolio &result, Stock *stock_list, int company_id, int size, int range_day_number){
+    
+    Portfolio* portfolio_list = new Portfolio[1];
+    initPortfolio(portfolio_list, 1, size, range_day_number, stock_list);
+    genPortfolio(portfolio_list, stock_list, 1, company_id);
+    capitalLevel(portfolio_list, 1);
+    countTrend(portfolio_list, 1, FUNDS);
+    result.copyP(portfolio_list[0]);
+    delete[] portfolio_list;
 }
 
 int main(int argc, const char * argv[]) {
     
+    Date current_date;
+    Date finish_date;
+    string TYPE;
+    string** data;
+    string temp;
+    vector<vector<string>> data_vector;
+    int size;
+    int day_number;
+    double START, END;
+    Stock* stock_list;
+    
     for(int s = 12; s >= 0; s--){
         
         srand(114);
-        double START, END;
         START = clock();
-        
-        Date current_date;
-        Date finish_date;
-        string TYPE;
-        string** data;
-        string temp;
-        vector<vector<string>> data_vector;
-        int size;
-        int day_number;
-        
         preSet(MODE, current_date, finish_date, s, TYPE);
-        
         createDir(FILE_DIR, TYPE, MODE);
         cout << TYPE << endl;
         
@@ -963,27 +1054,37 @@ int main(int argc, const char * argv[]) {
             
             cout << "______" << TYPE << " : " << current_date.getDate() << " - " << current_date.getRangeEnd(current_date.train_range).getDate() << "______" << endl;
             
-            Stock* stock_list = new Stock[size];
+            stock_list = new Stock[size];
             createStock(stock_list, size, day_number, data);
             
             Portfolio result(size, day_number, FUNDS, stock_list);
             if(MODE == "train"){
                 startTrain(result, stock_list, size, day_number);
+                outputFile(result, getOutputFilePath(current_date, MODE, FILE_DIR, TYPE));
             }else if(MODE == "test"){
+                vector<string> myTrainData_vector;
+                int myTrainData_size;
+                readSpeData(getOutputFilePath(current_date.getRangeEnd(-1 * current_date.train_range), "train", FILE_DIR, TYPE), myTrainData_vector, myTrainData_size, "Stock#");
+                string* myTrainData = vectorToArray(myTrainData_vector);
 //                startTest(result, current_date, company_list[c], TYPE, companyData, range_day_number);
+                myTrainData_vector.clear();
+                delete [] myTrainData;
             }else if(MODE == "exhaustive"){
 //                startExhaustive(result, company_list[c], companyData, range_day_number);
             }else if(MODE == "B&H"){
 //                startBH(result, company_list[c], companyData, range_day_number);
-            }else if(MODE == "specify"){
-//                startSpe(result, RSI_PARAMETER, company_list[c], companyData, range_day_number);
+            }else if(MODE == "single"){
+                for(int j = 0; j < size; j++){
+                    createDir(FILE_DIR, TYPE, MODE, stock_list[j].company_name);
+                    startSin(result, stock_list, j, size, day_number);
+                    outputFile(result, getOutputFilePath(current_date, MODE, FILE_DIR, TYPE, stock_list[j].company_name));
+                }
             }
             delete [] stock_list;
             releaseArray(data, day_number +1);
             releaseVector(data_vector);
             
             
-            outputFile(result, getOutputFilePath(current_date, MODE, FILE_DIR, TYPE));
             current_date.slide();
         }while(finish_date >= current_date);
         
