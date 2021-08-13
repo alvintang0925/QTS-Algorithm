@@ -1043,6 +1043,7 @@ int main(int argc, const char * argv[]) {
     for(int s = 12; s >= 0; s--){
         
         srand(114);
+        cout << setprecision(10);
         START = clock();
         preSet(MODE, current_date, finish_date, s, TYPE);
         createDir(FILE_DIR, TYPE, MODE);
