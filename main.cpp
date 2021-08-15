@@ -512,7 +512,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 1://Q2M
             TYPE = "Q2M";
-            temp = current_date.getRangeEnd(2);
+                temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -526,7 +526,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 3://H2M
             TYPE = "H2M";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -536,7 +536,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 4://H2Q
             TYPE = "H2Q";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -546,12 +546,12 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 5://H2H
             TYPE = "H2H";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "-" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             break;
         case 6://Y2M
             TYPE = "Y2M";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getMon() + "~" + temp.getYear() + "_" + temp.getMon() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -561,7 +561,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 7://Y2Q
             TYPE = "Y2Q";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
@@ -571,7 +571,7 @@ string getPriceFilename(Date current_date, string mode, int SLIDETYPE, string TY
             break;
         case 8://Y2H
             TYPE = "Y2H";
-            temp = current_date.getRangeEnd(current_date.slide_number - 1);
+            temp = current_date.getRangeEnd(current_date.train_range - 1);
             if (current_date.getYear() != temp.getYear()) {
                 return DATA_FILE_DIR + "/" + TYPE + "/" + mode + "_" + current_date.getYear() + "_" + current_date.getQ() + "~" + temp.getYear() + "_" + temp.getQ() + "(" + current_date.getYear() + " Q1).csv";
             }
