@@ -55,6 +55,8 @@ public:
     double MDD = 0;
     double PF = 0;
     
+    string date = "";
+    
     int* data = NULL;
     int* investment_number = NULL;
     int* stock_id_list = NULL;
@@ -68,6 +70,7 @@ public:
     int getDMoney();
     double getRemainMoney();
     double getNormalY(int);
+    double getProfit();
     void countQuadraticYLine();
     double getQuadraticY(int);
     void copyP(Portfolio&);
@@ -97,7 +100,7 @@ Portfolio::Portfolio(int size, int day_number, double funds, Stock *stock_list) 
     this -> funds = funds;
     this -> size = size;
     this -> day_number = day_number;
-    
+    this -> date = "";
     
     
     this -> data = new int[size];
@@ -147,7 +150,9 @@ void Portfolio::init() {
     this -> stock_number = 0;
     this -> capital_highest_point = 0;
     this -> MDD = 0;
+    this -> date = "";
     this -> remain_money = this -> funds;
+    
     
     if(this -> data != NULL){
         delete[] this -> data;
@@ -178,6 +183,7 @@ void Portfolio::init(int size, int day_number, double funds, Stock* stock_list) 
     this -> daily_risk = 0;
     this -> trend = 0;
     this -> stock_number = 0;
+    this -> date = "";
     this -> capital_highest_point = 0;
     this -> MDD = 0;
     this -> remain_money = funds;
@@ -241,6 +247,10 @@ double Portfolio::getRemainMoney() {
 
 double Portfolio::getNormalY(int day) {
     return this->m * day + this -> funds;
+}
+
+double Portfolio::getProfit(){
+    return this -> total_money[this -> day_number - 1] - this -> funds;
 }
 
 void Portfolio::countQuadraticYLine() {

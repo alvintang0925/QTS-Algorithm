@@ -28,10 +28,13 @@ using namespace filesystem;
 #define ITERNUMBER 10000
 #define PARTICLENUMBER 10
 #define FUNDS 10000000.0
-#define DELTA 0.0004
-#define QTSTYPE 2 //QTS 0, GQTS 1, GNQTS 2
+#define QTSTYPE 2 //QTS 0, GQTS 1, GNQTS 2, ANGQTS 3
 #define TRENDLINETYPE 0 //linear 0, quadratic 1
 #define MODE "test" //train, test, single
+
+double DELTA = 0.0004;
+double LOWER = 0.00045;
+double UPPER = 0.00125;
 
 string FILE_DIR = "0813_0.0004_GN_LN";
 string DATA_FILE_DIR = "DJI_30";
@@ -257,6 +260,24 @@ void recordCPUTime(double START, double END, string file_name){
     outfile_time.open(file_name, ios::out);
     outfile_time << "total time: " << total_time << " sec" << endl;
     outfile_time.close();
+}
+
+void recordTotalResult(vector<Portfolio> &result_list, string file_name){
+    ofstream outfile_total_result;
+    outfile_total_result.open(file_name, ios::out);
+    outfile_total_result << "Date,Real award,m,Daily risk,Trend,Stock number" << endl;
+    for(int j = 0; j < result_list.size(); j++){
+        outfile_total_result << result_list[j].date << ",";
+        outfile_total_result << result_list[j].getProfit() << ",";
+        outfile_total_result << result_list[j].m << ",";
+        outfile_total_result << result_list[j].daily_risk << ",";
+        outfile_total_result << result_list[j].trend << ",";
+        outfile_total_result << result_list[j].stock_number << ",";
+        for(int k = 0; k < result_list[j].stock_number; k++){
+            outfile_total_result << result_list[j].constituent_stocks[k].company_name << ",";
+        }
+        outfile_total_result << endl;
+    }
 }
 
 void createDir(string file_dir, string type, string mode){
@@ -906,7 +927,23 @@ void recordGAnswer(Portfolio* portfolio_list, Portfolio& gBest, Portfolio& gWors
 
 void adjBeta(Portfolio& best, Portfolio& worst, double *beta_) {
     for (int j = 0; j < best.size; j++) {
-        if (QTSTYPE == 2) {
+        if (QTSTYPE == 3) {
+            if (best.data[j] > worst.data[j]) {
+                if (beta_[j] < 0.5) {
+                    beta_[j] = 1 - beta_[j];
+                }
+                DELTA = LOWER + (UPPER - LOWER) * (1 - 2 * abs(beta_[j] - 0.5));
+                beta_[j] += DELTA;
+            }
+            else if (best.data[j] < worst.data[j]) {
+                if (beta_[j] > 0.5) {
+                    beta_[j] = 1 - beta_[j];
+                }
+                DELTA = LOWER + (UPPER - LOWER) * (1 - 2 * abs(beta_[j] - 0.5));
+                beta_[j] -= DELTA;
+            }
+        }
+        else if (QTSTYPE == 2) {
             if (best.data[j] > worst.data[j]) {
                 if (beta_[j] < 0.5) {
                     beta_[j] = 1 - beta_[j];
@@ -1035,6 +1072,7 @@ int main(int argc, const char * argv[]) {
     string** data;
     string temp;
     vector<vector<string>> data_vector;
+    vector<Portfolio> result_list;
     int size;
     int day_number;
     double START, END;
@@ -1059,17 +1097,20 @@ int main(int argc, const char * argv[]) {
             createStock(stock_list, size, day_number, data);
             
             Portfolio result(size, day_number, FUNDS, stock_list);
+            result.date = current_date.getDate() + " - " + current_date.getRangeEnd(current_date.train_range).getDate();
             if(MODE == "train"){
                 startTrain(result, stock_list, size, day_number);
                 outputFile(result, getOutputFilePath(current_date, MODE, FILE_DIR, TYPE));
+                result_list.push_back(result);
             }else if(MODE == "test"){
                 vector<string> myTrainData_vector;
-                int myTrainData_size;
+                int myTrainData_size = 0;
                 readSpeData(getOutputFilePath(current_date.getRangeEnd(-1 * current_date.train_range), "train", FILE_DIR, TYPE), myTrainData_vector, myTrainData_size, "Stock#");
                 string* myTrainData = vectorToArray(myTrainData_vector);
-//                startTest(result, current_date, company_list[c], TYPE, companyData, range_day_number);
+                startTest(result, stock_list, myTrainData, myTrainData_size, size, day_number);
                 myTrainData_vector.clear();
                 delete [] myTrainData;
+                result_list.push_back(result);
             }else if(MODE == "exhaustive"){
 //                startExhaustive(result, company_list[c], companyData, range_day_number);
             }else if(MODE == "B&H"){
@@ -1084,14 +1125,14 @@ int main(int argc, const char * argv[]) {
             delete [] stock_list;
             releaseArray(data, day_number +1);
             releaseVector(data_vector);
-            
-            
             current_date.slide();
         }while(finish_date >= current_date);
         
         END = clock();
         temp = FILE_DIR + "/" + TYPE + "/" + "time_" + MODE + ".txt";
         recordCPUTime(START, END, temp);
+        temp = FILE_DIR + "/" + TYPE + "/" + MODE + "_total_result.txt";
+        recordTotalResult(result_list, temp);
     }
     
     return 0;
